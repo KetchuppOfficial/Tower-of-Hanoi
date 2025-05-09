@@ -1,12 +1,15 @@
 import java.applet.Applet;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Optional;
 
 public class TowerOfHanoiApplet extends Applet implements Runnable, ActionListener {
     int[][] rods;
     int n_disks;
+    static final int MIN_DISKS = 3;
+    static final int MAX_DISKS = 10;
 
-    TextField disk_input;
+    TextField input;
     Label message_label;
     Button start_button;
 
@@ -21,8 +24,8 @@ public class TowerOfHanoiApplet extends Applet implements Runnable, ActionListen
         Panel topPanel = new Panel(new FlowLayout());
         topPanel.add(new Label("The number of disks:"));
 
-        disk_input = new TextField(5);
-        topPanel.add(disk_input);
+        input = new TextField(5);
+        topPanel.add(input);
 
         start_button = new Button("Start");
         start_button.addActionListener(this);
@@ -152,19 +155,32 @@ public class TowerOfHanoiApplet extends Applet implements Runnable, ActionListen
                 return;
         }
 
-        try {
-            n_disks = Integer.parseUnsignedInt(disk_input.getText());
-            if (n_disks < 3) {
-                throw new NumberFormatException("the number shall be not less than 3");
-            }
-        } catch (NumberFormatException exception) {
-            message_label.setText("Enter a positive number not less than 3");
+        Optional<Integer> maybe_n_disks = get_input();
+        if (!maybe_n_disks.isPresent()) {
+            message_label.setText(
+                "Enter a positive number not less than 3 and not greater than 10");
             return;
         }
+
+        n_disks = maybe_n_disks.get();
 
         message_label.setText("");
 
         solver_thread = new Thread(this);
         solver_thread.start();
+    }
+
+    Optional<Integer> get_input() {
+        try {
+            final int n = Integer.parseUnsignedInt(input.getText());
+            if (n < MIN_DISKS || n > MAX_DISKS) {
+                input.setText("");
+                return Optional.empty();
+            }
+            return Optional.of(n);
+        } catch (NumberFormatException exception) {
+            input.setText("");
+            return Optional.empty();
+        }
     }
 }
